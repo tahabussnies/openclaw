@@ -30,7 +30,9 @@ Railway will either:
 Then open:
 
 - `https://<your-railway-domain>/setup` — setup wizard (password protected)
-- `https://<your-railway-domain>/openclaw` — Control UI
+- `https://<your-railway-domain>/openclaw` — Control UI (or `/` if no `gateway.controlUi.basePath` is set)
+
+This matches the outcome of [Getting Started](/start/getting-started): a running gateway, auth configured, and Control UI access—via the web instead of the CLI.
 
 ## What you get
 
@@ -57,6 +59,7 @@ Attach a volume mounted at:
 
 Set these variables on the service:
 
+- `RAILWAY_RUN_UID=0` (required for persistent storage — Railway volumes are root-owned; this runs the container as root so it can create `/data/.openclaw` and `/data/workspace`. Without it you get "Permission denied" and state falls back to `/tmp`, which does not persist.)
 - `SETUP_PASSWORD` (required)
 - `PORT=8080` (required — must match the port in Public Networking)
 - `OPENCLAW_STATE_DIR=/data/.openclaw` (recommended)

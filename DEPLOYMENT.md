@@ -52,6 +52,9 @@
 3. **Environment Variables** (set in Railway dashboard):
 
 ```bash
+# Required for volume write access (Railway volumes are root-owned; UID 0 = root)
+RAILWAY_RUN_UID=0
+
 # Required (SETUP_PASSWORD protects /setup wizard; set a strong value)
 SETUP_PASSWORD=your-setup-password
 PORT=8080
@@ -59,7 +62,7 @@ PORT=8080
 # Required for gateway auth
 OPENCLAW_GATEWAY_TOKEN=your-secure-token
 
-# Recommended (start command sets these if not already set)
+# Recommended (start command sets these when /data is writable)
 OPENCLAW_STATE_DIR=/data/.openclaw
 OPENCLAW_WORKSPACE_DIR=/data/workspace
 
@@ -76,7 +79,8 @@ data directory. See `src/config/paths.ts` for the full resolution logic.
 
 ### Persistent State
 - Railway volume must be mounted at `/data`
-- The start command creates `/data/.openclaw` (state) and `/data/workspace` (workspace)
+- **Set `RAILWAY_RUN_UID=0`** so the container runs as root and can create dirs in `/data` (Railway volumes are root-owned; otherwise you get "Permission denied" and the start command falls back to `/tmp`, which is not persistent)
+- The start command creates `/data/.openclaw` (state) and `/data/workspace` (workspace) when `/data` is writable
 - Config, sessions, and agent memory survive redeploys
 
 ### Trusted Proxies
@@ -91,7 +95,8 @@ Railway's load balancer forwards from internal IPs (100.64.0.x). To avoid
 # Initialize Railway project
 railway init
 
-# Set environment variables
+# Set environment variables (RAILWAY_RUN_UID=0 required for volume write)
+railway vars set RAILWAY_RUN_UID="0"
 railway vars set SETUP_PASSWORD="your-password"
 railway vars set PORT="8080"
 railway vars set OPENCLAW_GATEWAY_TOKEN="your-token"
@@ -175,6 +180,18 @@ openclaw security audit --deep
 # Test OpenRouter
 openclaw chat --provider openrouter --model openrouter/auto --text "ping"
 ```
+
+## Related OpenClaw documentation
+
+These [docs.openclaw.ai](https://docs.openclaw.ai/) pages apply to Railway and cloud deployments:
+
+- [Deploy on Railway](https://docs.openclaw.ai/install/railway) — checklist, variables, setup flow
+- [Environment variables](https://docs.openclaw.ai/environment) — precedence and config `env` block
+- [Gateway configuration](https://docs.openclaw.ai/gateway/configuration) — `gateway.trustedProxies`, auth, control UI base path
+- [Gateway troubleshooting](https://docs.openclaw.ai/gateway/troubleshooting) — common issues, "Gateway start blocked", port and bind
+- [Health checks](https://docs.openclaw.ai/gateway/health) — CLI health and status commands
+- [Control UI](https://docs.openclaw.ai/web/control-ui) — auth, pairing, token, HTTPS
+- [FAQ](https://docs.openclaw.ai/help/faq) — "First 60 seconds", bind/auth, "Disconnected from gateway"
 
 ## Documentation Links
 

@@ -3,7 +3,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "sh -c \"mkdir -p /data/.openclaw /data/workspace && export OPENCLAW_STATE_DIR=/data/.openclaw && export OPENCLAW_WORKSPACE_DIR=/data/workspace && exec npx openclaw gateway --bind lan --port ${PORT:-8080} --auth token --token \\\"$OPENCLAW_GATEWAY_TOKEN\\\" --allow-unconfigured\"",
+    "startCommand": "sh -c \"chmod -R a+rwx /data 2>/dev/null; if mkdir -p /data/.openclaw /data/workspace 2>/dev/null; then export OPENCLAW_STATE_DIR=/data/.openclaw OPENCLAW_WORKSPACE_DIR=/data/workspace; else mkdir -p /tmp/.openclaw /tmp/workspace && export OPENCLAW_STATE_DIR=/tmp/.openclaw OPENCLAW_WORKSPACE_DIR=/tmp/workspace; fi && exec npx openclaw gateway --bind lan --port ${PORT:-8080} --auth token --token \\\"$OPENCLAW_GATEWAY_TOKEN\\\" --allow-unconfigured\"",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
