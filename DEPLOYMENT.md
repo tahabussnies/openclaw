@@ -49,7 +49,21 @@
 
 1. **Volume**: Attach a volume mounted at `/data` (required for persistent state)
 2. **HTTP Proxy**: Enable on port `8080`
-3. **Environment Variables** (set in Railway dashboard):
+3. **Environment Variables** (set in **Railway Dashboard → your service → Variables**):
+
+**Dashboard checklist** — add or confirm these in the Variables tab:
+
+| Variable | Value | Required |
+|----------|--------|----------|
+| `RAILWAY_RUN_UID` | `0` | Yes (fixes "Permission denied" on `/data`) |
+| `SETUP_PASSWORD` | your chosen password | Yes |
+| `PORT` | `8080` | Yes |
+| `OPENCLAW_GATEWAY_TOKEN` | your secret token | Yes |
+| `OPENCLAW_STATE_DIR` | `/data/.openclaw` | Recommended |
+| `OPENCLAW_WORKSPACE_DIR` | `/data/workspace` | Recommended |
+| `OPENROUTER_API_KEY` or other provider key | (your key) | At least one for models |
+
+4. **Environment Variables** (full list for copy/paste or CLI):
 
 ```bash
 # Required for volume write access (Railway volumes are root-owned; UID 0 = root)
