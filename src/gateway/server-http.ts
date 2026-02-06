@@ -314,6 +314,13 @@ export function createGatewayHttpServer(opts: {
       return;
     }
 
+    // Lightweight HTTP health check for container platforms (Railway, Render, etc.).
+    // Placed before auth/config to keep it fast and unauthenticated.
+    if (req.method === "GET" && req.url === "/health") {
+      sendJson(res, 200, { status: "ok", timestamp: new Date().toISOString() });
+      return;
+    }
+
     try {
       const configSnapshot = loadConfig();
       const trustedProxies = configSnapshot.gateway?.trustedProxies ?? [];

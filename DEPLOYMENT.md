@@ -39,17 +39,31 @@
 ## Railway Deployment
 
 ### Configuration
-- ✅ **railway.json**: Created with Nixpacks builder
-- ✅ **Binding**: Configured for 0.0.0.0:$PORT (Railway standard)
-- ✅ **Health Check**: `/health` endpoint with 300s timeout
+- ✅ **railway.json**: Nixpacks builder, startup via `scripts/railway-start.sh`
+- ✅ **Binding**: `--bind lan` (0.0.0.0) so Railway's HTTP proxy can reach the gateway
+- ✅ **Health Check**: HTTP GET `/health` endpoint (200 OK), 300s timeout
 - ✅ **Restart Policy**: ON_FAILURE with 10 max retries
+- ✅ **Startup Script**: `scripts/railway-start.sh` handles directory setup, env vars, config seeding, and gateway launch
 
-### Environment Variables Required
+### Required Railway Settings
+
+1. **Volume**: Attach a volume mounted at `/data` (required for persistent state)
+2. **HTTP Proxy**: Enable on port `8080`
+3. **Environment Variables** (set in Railway dashboard):
+
 ```bash
-# Core Gateway
+# Required
+SETUP_PASSWORD=your-setup-password
+PORT=8080
+
+# Required for gateway auth
 OPENCLAW_GATEWAY_TOKEN=your-secure-token
 
-# Model Providers
+# Recommended (set automatically by scripts/railway-start.sh if not overridden)
+OPENCLAW_STATE_DIR=/data/.openclaw
+OPENCLAW_WORKSPACE_DIR=/data/workspace
+
+# Model Providers (at least one required)
 OPENROUTER_API_KEY=sk-or-v1-your-openrouter-key
 ANTHROPIC_API_KEY=sk-ant-your-claude-key
 
@@ -57,9 +71,20 @@ ANTHROPIC_API_KEY=sk-ant-your-claude-key
 TELEGRAM_BOT_TOKEN=your-telegram-bot-token
 ```
 
+**Important**: The gateway reads `OPENCLAW_STATE_DIR` (not `OPENCLAW_DATA_DIR`) for its
+data directory. See `src/config/paths.ts` for the full resolution logic.
+
 ### Persistent State
-- Configure Railway volume mount for `/data` or `~/.openclaw`
-- Ensures agent memory and config survive redeploys
+- Railway volume must be mounted at `/data`
+- The startup script creates `/data/.openclaw` (state) and `/data/workspace` (workspace)
+- On first deploy, an initial config is seeded with `trustedProxies` for Railway's internal load balancer (100.64.0.0/24)
+- Config, sessions, and agent memory survive redeploys
+
+### Trusted Proxies
+Railway's load balancer forwards requests from internal IPs (100.64.0.x range).
+The startup script seeds `gateway.trustedProxies` in the config so the gateway
+trusts these proxy headers. Without this, all connections are treated as remote
+and the dashboard logs "Proxy headers detected from untrusted address" warnings.
 
 ## Railway Deployment Commands
 
@@ -68,8 +93,10 @@ TELEGRAM_BOT_TOKEN=your-telegram-bot-token
 railway init
 
 # Set environment variables
-railway vars set OPENROUTER_API_KEY="your-key"
+railway vars set SETUP_PASSWORD="your-password"
+railway vars set PORT="8080"
 railway vars set OPENCLAW_GATEWAY_TOKEN="your-token"
+railway vars set OPENROUTER_API_KEY="your-key"
 
 # Deploy service
 railway up
@@ -119,6 +146,17 @@ railway logs
 ## Troubleshooting
 
 ### Common Issues
+- **EACCES permission denied on `/data/.openclaw`**: The gateway is using the wrong
+  state directory. Ensure `OPENCLAW_STATE_DIR=/data/.openclaw` is set (not `OPENCLAW_DATA_DIR`).
+  The `/data` volume must be mounted and writable by the container user.
+- **"Proxy headers detected from untrusted address"**: Railway's load balancer IPs
+  are not in `gateway.trustedProxies`. The startup script seeds these automatically on
+  first deploy. If the config was created manually, add Railway's 100.64.0.x IPs to
+  `gateway.trustedProxies` in `openclaw.json`.
+- **Dashboard shows "Disconnected"**: Usually caused by EACCES errors (see above).
+  Check Railway deployment logs for permission errors.
+- **Health check returns 404**: Ensure you are running a version with the HTTP `/health`
+  endpoint (added in `src/gateway/server-http.ts`).
 - **Gateway won't start**: Check Railway environment variables
 - **OpenRouter auth fails**: Verify API key format and permissions
 - **Telegram no response**: Check bot token and webhook/polling mode
