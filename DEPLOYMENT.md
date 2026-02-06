@@ -39,11 +39,11 @@
 ## Railway Deployment
 
 ### Configuration
-- ✅ **railway.json**: Nixpacks builder, startup via `scripts/railway-start.sh`
+- ✅ **railway.json**: Nixpacks builder, inline start command (no script dependency)
 - ✅ **Binding**: `--bind lan` (0.0.0.0) so Railway's HTTP proxy can reach the gateway
 - ✅ **Health Check**: HTTP GET `/health` endpoint (200 OK), 300s timeout
 - ✅ **Restart Policy**: ON_FAILURE with 10 max retries
-- ✅ **Startup Script**: `scripts/railway-start.sh` handles directory setup, env vars, config seeding, and gateway launch
+- ✅ **Start command**: Creates `/data/.openclaw` and `/data/workspace`, sets `OPENCLAW_STATE_DIR`/`OPENCLAW_WORKSPACE_DIR`, then runs the gateway
 
 ### Required Railway Settings
 
@@ -52,14 +52,14 @@
 3. **Environment Variables** (set in Railway dashboard):
 
 ```bash
-# Required
+# Required (SETUP_PASSWORD protects /setup wizard; set a strong value)
 SETUP_PASSWORD=your-setup-password
 PORT=8080
 
 # Required for gateway auth
 OPENCLAW_GATEWAY_TOKEN=your-secure-token
 
-# Recommended (set automatically by scripts/railway-start.sh if not overridden)
+# Recommended (start command sets these if not already set)
 OPENCLAW_STATE_DIR=/data/.openclaw
 OPENCLAW_WORKSPACE_DIR=/data/workspace
 
@@ -76,15 +76,14 @@ data directory. See `src/config/paths.ts` for the full resolution logic.
 
 ### Persistent State
 - Railway volume must be mounted at `/data`
-- The startup script creates `/data/.openclaw` (state) and `/data/workspace` (workspace)
-- On first deploy, an initial config is seeded with `trustedProxies` for Railway's internal load balancer (100.64.0.0/24)
+- The start command creates `/data/.openclaw` (state) and `/data/workspace` (workspace)
 - Config, sessions, and agent memory survive redeploys
 
 ### Trusted Proxies
-Railway's load balancer forwards requests from internal IPs (100.64.0.x range).
-The startup script seeds `gateway.trustedProxies` in the config so the gateway
-trusts these proxy headers. Without this, all connections are treated as remote
-and the dashboard logs "Proxy headers detected from untrusted address" warnings.
+Railway's load balancer forwards from internal IPs (100.64.0.x). To avoid
+"Proxy headers detected from untrusted address" warnings, add `gateway.trustedProxies`
+(e.g. `["100.64.0.0"]` or a list of 100.64.0.x IPs) via the Control UI or by editing
+`/data/.openclaw/openclaw.json` after first deploy.
 
 ## Railway Deployment Commands
 

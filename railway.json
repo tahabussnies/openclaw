@@ -3,7 +3,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "sh scripts/railway-start.sh",
+    "startCommand": "sh -c \"mkdir -p /data/.openclaw /data/workspace && export OPENCLAW_STATE_DIR=/data/.openclaw && export OPENCLAW_WORKSPACE_DIR=/data/workspace && exec npx openclaw gateway --bind lan --port ${PORT:-8080} --auth token --token \\\"$OPENCLAW_GATEWAY_TOKEN\\\" --allow-unconfigured\"",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
