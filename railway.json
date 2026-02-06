@@ -3,7 +3,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "npm start && openclaw gateway --port $PORT --bind 0.0.0.0",
+    "startCommand": "npx openclaw gateway --bind 0.0.0.0 --port $PORT --auth token --token $OPENCLAW_GATEWAY_TOKEN",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
