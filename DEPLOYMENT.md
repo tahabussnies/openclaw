@@ -80,6 +80,9 @@ OPENCLAW_GATEWAY_TOKEN=your-secure-token
 OPENCLAW_STATE_DIR=/data/.openclaw
 OPENCLAW_WORKSPACE_DIR=/data/workspace
 
+# Trust Railway proxy (fixes "pairing required" / "Health Offline" in dashboard)
+OPENCLAW_GATEWAY_TRUSTED_PROXIES=100.64.0.0/24
+
 # Model Providers (at least one required)
 OPENROUTER_API_KEY=sk-or-v1-your-openrouter-key
 ANTHROPIC_API_KEY=sk-ant-your-claude-key
@@ -97,11 +100,8 @@ data directory. See `src/config/paths.ts` for the full resolution logic.
 - The start command creates `/data/.openclaw` (state) and `/data/workspace` (workspace) when `/data` is writable
 - Config, sessions, and agent memory survive redeploys
 
-### Trusted Proxies
-Railway's load balancer forwards from internal IPs (100.64.0.x). To avoid
-"Proxy headers detected from untrusted address" warnings, add `gateway.trustedProxies`
-(e.g. `["100.64.0.0"]` or a list of 100.64.0.x IPs) via the Control UI or by editing
-`/data/.openclaw/openclaw.json` after first deploy.
+### Trusted Proxies (fixes "pairing required" and "Health Offline")
+Railway's load balancer uses 100.64.0.x. Set the env var **`OPENCLAW_GATEWAY_TRUSTED_PROXIES=100.64.0.0/24`** on the service. The gateway then trusts the proxy and uses `X-Forwarded-For` for client detection, so token auth works and the dashboard connects instead of "pairing required". You can also add `gateway.trustedProxies` in the config file or Control UI.
 
 ## Railway Deployment Commands
 
@@ -109,7 +109,14 @@ Railway's load balancer forwards from internal IPs (100.64.0.x). To avoid
 # Initialize Railway project
 railway init
 
-# Set environment variables (RAILWAY_RUN_UID=0 required for volume write)
+# Option A: Set variables via API script (no interactive CLI)
+# 1. Create a token at https://railway.com/account/tokens (Account or Workspace token)
+# 2. In repo root: set RAILWAY_TOKEN=<your-token> then run:
+node scripts/railway-set-vars.js
+# This sets RAILWAY_RUN_UID=0, PORT=8080, OPENCLAW_STATE_DIR, OPENCLAW_WORKSPACE_DIR.
+# Add secrets (SETUP_PASSWORD, OPENCLAW_GATEWAY_TOKEN, API keys) in the Railway dashboard.
+
+# Option B: Railway CLI (interactive; vars must be set in dashboard — CLI cannot set vars)
 railway vars set RAILWAY_RUN_UID="0"
 railway vars set SETUP_PASSWORD="your-password"
 railway vars set PORT="8080"

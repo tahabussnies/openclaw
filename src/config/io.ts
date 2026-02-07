@@ -221,7 +221,15 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
             timeoutMs: resolveShellEnvFallbackTimeoutMs(deps.env),
           });
         }
-        return {};
+        const empty: OpenClawConfig = {};
+        const envTrustedProxies = deps.env.OPENCLAW_GATEWAY_TRUSTED_PROXIES?.trim();
+        if (envTrustedProxies) {
+          const fromEnv = envTrustedProxies.split(",").map((s) => s.trim()).filter(Boolean);
+          if (fromEnv.length > 0) {
+            empty.gateway = { ...empty.gateway, trustedProxies: fromEnv };
+          }
+        }
+        return applyConfigOverrides(empty);
       }
       const raw = deps.fs.readFileSync(configPath, "utf-8");
       const parsed = deps.json5.parse(raw);
@@ -293,6 +301,15 @@ export function createConfigIO(overrides: ConfigIoDeps = {}) {
       }
 
       applyConfigEnv(cfg, deps.env);
+
+      // Env OPENCLAW_GATEWAY_TRUSTED_PROXIES (comma-separated IPs or CIDRs, e.g. 100.64.0.0/24 for Railway)
+      const envTrustedProxies = deps.env.OPENCLAW_GATEWAY_TRUSTED_PROXIES?.trim();
+      if (envTrustedProxies) {
+        const fromEnv = envTrustedProxies.split(",").map((s) => s.trim()).filter(Boolean);
+        if (fromEnv.length > 0) {
+          cfg.gateway = { ...cfg.gateway, trustedProxies: [...(cfg.gateway?.trustedProxies ?? []), ...fromEnv] };
+        }
+      }
 
       const enabled = shouldEnableShellEnvFallback(deps.env) || cfg.env?.shellEnv?.enabled === true;
       if (enabled && !shouldDeferShellEnvFallback(deps.env)) {
