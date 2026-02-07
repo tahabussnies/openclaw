@@ -93,8 +93,13 @@ export function isTrustedProxyAddress(ip: string | undefined, trustedProxies?: s
   if (!normalized || !trustedProxies || trustedProxies.length === 0) {
     return false;
   }
+  // Check for wildcard first
+  if (trustedProxies.includes("*")) {
+    return true;
+  }
   return trustedProxies.some((proxy) => {
     const p = proxy.trim();
+    if (p === "*") return true;
     if (p.includes("/")) {
       return isIpInCidr(normalized, p);
     }
