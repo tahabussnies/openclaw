@@ -217,15 +217,15 @@ export function attachGatewayWsMessageHandler(params: {
   if (hasUntrustedProxyHeaders) {
     logWsControl.warn(
       "Proxy headers detected from untrusted address. " +
-        "Connection will not be treated as local. " +
-        "Configure gateway.trustedProxies to restore local client detection behind your proxy.",
+      "Connection will not be treated as local. " +
+      "Configure gateway.trustedProxies to restore local client detection behind your proxy.",
     );
   }
   if (!hostIsLocalish && isLoopbackAddress(remoteAddr) && !hasProxyHeaders) {
     logWsControl.warn(
       "Loopback connection with non-local Host header. " +
-        "Treating it as remote. If you're behind a reverse proxy, " +
-        "set gateway.trustedProxies and forward X-Forwarded-For/X-Real-IP.",
+      "Treating it as remote. If you're behind a reverse proxy, " +
+      "set gateway.trustedProxies and forward X-Forwarded-For/X-Real-IP.",
     );
   }
 
@@ -421,11 +421,11 @@ export function attachGatewayWsMessageHandler(params: {
           authResult.method ?? (resolvedAuth.mode === "password" ? "password" : "token");
         const sharedAuthResult = hasSharedAuth
           ? await authorizeGatewayConnect({
-              auth: { ...resolvedAuth, allowTailscale: false },
-              connectAuth: connectParams.auth,
-              req: upgradeReq,
-              trustedProxies,
-            })
+            auth: { ...resolvedAuth, allowTailscale: false },
+            connectAuth: connectParams.auth,
+            req: upgradeReq,
+            trustedProxies,
+          })
           : null;
         const sharedAuthOk =
           sharedAuthResult?.ok === true &&
@@ -675,7 +675,7 @@ export function attachGatewayWsMessageHandler(params: {
           return;
         }
 
-        const skipPairing = allowControlUiBypass && sharedAuthOk;
+        const skipPairing = sharedAuthOk || (allowControlUiBypass && sharedAuthOk);
         if (device && devicePublicKey && !skipPairing) {
           const requirePairing = async (reason: string, _paired?: { deviceId: string }) => {
             const pairing = await requestDevicePairing({
@@ -863,11 +863,11 @@ export function attachGatewayWsMessageHandler(params: {
           canvasHostUrl,
           auth: deviceToken
             ? {
-                deviceToken: deviceToken.token,
-                role: deviceToken.role,
-                scopes: deviceToken.scopes,
-                issuedAtMs: deviceToken.rotatedAtMs ?? deviceToken.createdAtMs,
-              }
+              deviceToken: deviceToken.token,
+              role: deviceToken.role,
+              scopes: deviceToken.scopes,
+              issuedAtMs: deviceToken.rotatedAtMs ?? deviceToken.createdAtMs,
+            }
             : undefined,
           policy: {
             maxPayload: MAX_PAYLOAD_BYTES,
