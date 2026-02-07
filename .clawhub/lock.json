@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "skills": {
+    "brave-search": {
+      "version": "1.0.1",
+      "installedAt": 1770493133790
+    },
+    "todoist": {
+      "version": "0.2.1",
+      "installedAt": 1770493264049
+    },
+    "google-sheets": {
+      "version": "1.0.4",
+      "installedAt": 1770493285698
+    },
+    "ga4-analytics": {
+      "version": "1.0.0",
+      "installedAt": 1770493421301
+    }
+  }
+}
